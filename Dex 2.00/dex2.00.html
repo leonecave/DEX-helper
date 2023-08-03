@@ -183,49 +183,7 @@
       lTokenAmount += pairL * (250 + getTotalQueueCount());
     }
     
-  
 
-    function createPlayerOptions() {
-      playerCount = parseInt(document.getElementById("playerCount").value);
-      if (playerCount >= 2 && playerCount <= 10) {
-        const playerSelect = document.getElementById("playerSelect");
-        const manualPlayerSelect = document.getElementById("manualPlayerSelect");
-        playerSelect.innerHTML = "";
-        manualPlayerSelect.innerHTML = "";
-        for (let i = 0; i < playerCount; i++) {
-          const option = document.createElement("option");
-          option.value = i + 1;
-          option.textContent = `플레이어 ${i + 1}`;
-          playerSelect.appendChild(option);
-
-          const manualOption = document.createElement("option");
-          manualOption.value = i + 1;
-          manualOption.textContent = `플레이어 ${i + 1}`;
-          manualPlayerSelect.appendChild(manualOption);
-        }
-
-        // 플레이어 자산 현황 초기화
-        playerSToken = Array(playerCount).fill(100);
-        playerLToken = Array(playerCount).fill(200);
-
-        // 이전 상태 백업
-        previousPlayerSToken = [...playerSToken];
-        previousPlayerLToken = [...playerLToken];
-        previousFeePool = feePool;
-
-        // 화면 표시 업데이트
-        const poolStatus = document.getElementById("poolStatus");
-        const swapSection = document.getElementById("swapSection");
-        const playerAssets = document.getElementById("playerAssets");
-        poolStatus.style.display = "block";
-        swapSection.style.display = "block";
-        playerAssets.style.display = "block";
-        updatePoolDisplay();
-        updatePlayerAssets();
-      } else {
-        alert("플레이어 수는 2 이상 10 이하로 입력해주세요.");
-      }
-    }
 
     function updatePoolDisplay() {
       document.getElementById("sTokenAmount").textContent = sTokenAmount;
