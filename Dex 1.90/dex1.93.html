@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DEX 도우미</title>
+  <div id="poolStatus">
+    <h1>DEX 도우미</h1>
+
+    <h2>스왑 시스템 풀 현황</h2>
+    <p>S 토큰: <span id="sTokenAmount">2500</span></p>
+    <p>L 토큰: <span id="lTokenAmount">5000</span></p>
+    <p>수수료 풀: <span id="feePool">0</span></p>
+    <p>S to L 스왑 비율: <span id="sToLRatio">0.5</span></p>
+    <p>L to S 스왑 비율: <span id="lToSRatio">2</span></p>
+    <p>예치수량: <span id="playerQueueCount"></span></p>
+  </div>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+    }
+
+    #players {
+      display: flex;
+    }
+
+    .player {
+      border: 1px solid black;
+      padding: 10px;
+      margin: 10px;
+    }
+
+    #result {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div id="players">
+    <!-- 플레이어 정보를 반복문으로 생성 -->
+    <!-- 플레이어 수를 10명으로 수정 -->
+    <script>
+      for (let i = 1; i <= 10; i++) {
+        document.write(`
+          <div class="player" id="player${i}">
+            <h2>플레이어 ${i}</h2>
+            <p>보유 토큰: <span id="tokens${i}">0</span></p>
+            <p>대기열에 들어간 횟수: <span id="queueCount${i}">0</span></p>
+            <button onclick="addPlayerToOrder(${i})">예치</button>
+            <button onclick="removePlayerFromOrder(${i})">예치 해제</button>
+          </div>
+        `);
+      }
+    </script>
+  </div>
+
+  <button onclick="distributeToken()">배급</button>
+  <button onclick="distributeAllTokens()">한번에 배급</button>
+
+
+  <div id="result">
+    <h2>시뮬레이션 결과</h2>
+    <p><strong>총 배급한 토큰 수:</strong> <span id="totalTokens">0</span></p>
+    <p><strong>토큰 배급 순서:</strong> <span id="orderList"></span></p>
+  </div>
+</head>
+<body>
+
+  <div id="swapSection">
+    <h2>S-L, L-S 스왑실행</h2>
+    <input type="radio" name="swapOption" id="lsSwapOption" value="ls">
+    <label for="lsSwapOption">L to S 스왑</label>
+    <input type="radio" name="swapOption" id="slSwapOption" value="sl">
+    <label for="slSwapOption">S to L 스왑</label>
+    <br>
+    <label for="swapAmount">스왑할 토큰 수량:</label>
+    <input type="number" id="swapAmount" min="1" step="1" required>
+    <p>수수료: <span id="swapFee"></span> L 토큰</p>
+    <p>예상 결과: <span id="expectedResult"></span></p>
+    <label for="playerSelect">플레이어 선택:</label>
+    <select id="playerSelect">
+       <option value="1">플레이어 1</option>
+        <option value="2">플레이어 2</option>
+        <option value="3">플레이어 3</option>
+        <option value="4">플레이어 4</option>
+        <option value="5">플레이어 5</option>
+        <option value="6">플레이어 6</option>
+        <option value="7">플레이어 7</option>
+        <option value="8">플레이어 8</option>
+        <option value="9">플레이어 9</option>
+        <option value="10">플레이어 10</option>
+      </select>
+    <button onclick="calculateExpectedResult()">예상 결과 계산</button>
+    <button onclick="executeSwap()">스왑 실행</button>
+    <button onclick="undoSwap()">Undo</button>
+  </div>
+
+  <div id="playerAssets">
+    <h2>플레이어 자산 현황</h2>
+    <table id="playerAssetsTable">
+      <tr>
+        <th>플레이어</th>
+        <th>S 토큰</th>
+        <th>L 토큰</th>
+      </tr>
+    </table>
+    <div>
+      <label for="manualPlayerSelect">수정할 플레이어 선택:</label>
+      <select id="manualPlayerSelect">
+        <option value="1">플레이어 1</option>
+        <option value="2">플레이어 2</option>
+        <option value="3">플레이어 3</option>
+        <option value="4">플레이어 4</option>
+        <option value="5">플레이어 5</option>
+        <option value="6">플레이어 6</option>
+        <option value="7">플레이어 7</option>
+        <option value="8">플레이어 8</option>
+        <option value="9">플레이어 9</option>
+        <option value="10">플레이어 10</option>
+      </select>
+      <label for="manualSToken">S 토큰:</label>
+      <input type="number" id="manualSToken" min="0" step="1" required>
+      <label for="manualLToken">L 토큰:</label>
+      <input type="number" id="manualLToken" min="0" step="1" required>
+      <button onclick="updatePlayerAssetsManually()">수정</button>
+    </div>
+  </div>
+
+  <script>
+    let sTokenAmount = 2500;
+    let lTokenAmount = 5000;
+    let feePool = 0;
+    const swapFee = 1;
+
+    const playerCount = 10;
+    let playerSToken = Array(playerCount).fill(100);
+    let playerLToken = Array(playerCount).fill(200);
+
+    let previousSTokenAmount = sTokenAmount;
+    let previousLTokenAmount = lTokenAmount;
+    let previousFeePool = feePool;
+    let previousPlayerSToken = [];
+    let previousPlayerLToken = [];
+
+    const playerIds = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+    const playerTokens = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    const queueCount = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    let playerOrder = [];
+    let totalTokens = 0;
+
+    function createPlayerOptions() {
+      playerCount = parseInt(document.getElementById("playerCount").value);
+      if (playerCount >= 2 && playerCount <= 10) {
+        const playerSelect = document.getElementById("playerSelect");
+        const manualPlayerSelect = document.getElementById("manualPlayerSelect");
+        playerSelect.innerHTML = "";
+        manualPlayerSelect.innerHTML = "";
+        for (let i = 0; i < playerCount; i++) {
+          const option = document.createElement("option");
+          option.value = i + 1;
+          option.textContent = `플레이어 ${i + 1}`;
+          playerSelect.appendChild(option);
+
+          const manualOption = document.createElement("option");
+          manualOption.value = i + 1;
+          manualOption.textContent = `플레이어 ${i + 1}`;
+          manualPlayerSelect.appendChild(manualOption);
+        }
+
+        // 플레이어 자산 현황 초기화
+        playerSToken = Array(playerCount).fill(100);
+        playerLToken = Array(playerCount).fill(200);
+
+        // 이전 상태 백업
+        previousPlayerSToken = [...playerSToken];
+        previousPlayerLToken = [...playerLToken];
+        previousFeePool = feePool;
+
+        // 화면 표시 업데이트
+        const poolStatus = document.getElementById("poolStatus");
+        const swapSection = document.getElementById("swapSection");
+        const playerAssets = document.getElementById("playerAssets");
+        poolStatus.style.display = "block";
+        swapSection.style.display = "block";
+        playerAssets.style.display = "block";
+        updatePoolDisplay();
+        updatePlayerAssets();
+      } else {
+        alert("플레이어 수는 2 이상 10 이하로 입력해주세요.");
+      }
+    }
+
+    function updatePoolDisplay() {
+      document.getElementById("sTokenAmount").textContent = sTokenAmount;
+      document.getElementById("lTokenAmount").textContent = lTokenAmount;
+      document.getElementById("feePool").textContent = feePool;
+
+      // 스왑 비율 계산 및 표시
+      const sToLRatio = lTokenAmount !== 0 ? (sTokenAmount / lTokenAmount).toFixed(8) : '∞';
+      const lToSRatio = sTokenAmount !== 0 ? (lTokenAmount / sTokenAmount).toFixed(8) : '∞';
+      document.getElementById("sToLRatio").textContent = sToLRatio;
+      document.getElementById("lToSRatio").textContent = lToSRatio;
+    }
+
+    function generatePlayerAssetsTable() {
+          let tableHTML = "";
+          for (let i = 0; i < playerCount; i++) {
+            tableHTML += `
+              <tr>
+                <td>플레이어 ${i + 1}</td>
+                <td><span id="playerSToken${i}">${playerSToken[i]}</span></td>
+                <td><span id="playerLToken${i}">${playerLToken[i]}</span></td>
+              </tr>
+            `;
+          }
+          return tableHTML;
+        }
+
+    function updatePlayerAssets() {
+          const playerAssetsTable = document.getElementById("playerAssetsTable");
+          playerAssetsTable.innerHTML = generatePlayerAssetsTable();
+        }
+
+    function calculateExpectedResult() {
+      const swapAmount = parseInt(document.getElementById("swapAmount").value);
+      const option = document.querySelector('input[name="swapOption"]:checked').value;
+      const selectedPlayer = parseInt(document.getElementById("playerSelect").value);
+      let expectedResult;
+
+      if (option === "ls") {
+        const fee = swapFee;
+        const remainingLToken = swapAmount - fee;
+        const receivedSToken = (remainingLToken * sTokenAmount) / (lTokenAmount + remainingLToken);
+        const actualReceivedSToken = Math.floor(receivedSToken);
+        expectedResult = `L to S 예상 결과: 입력한 ${swapAmount}L 중 수수료 ${fee}L 을 수수료 풀로 보내고, 나머지 ${remainingLToken}L 을 ${actualReceivedSToken}S 로 스왑합니다. (플레이어 ${selectedPlayer})`;
+      } else if (option === "sl") {
+        const receivedLToken = (swapAmount * lTokenAmount) / (sTokenAmount + swapAmount);
+        const slResult = Math.floor(receivedLToken);
+        const fee = swapFee;
+        expectedResult = `S to L 예상 결과: 입력한 ${swapAmount}S 를 ${slResult}L 로 스왑하고 수수료 ${fee}L 을 제외한 ${slResult - fee}L 을(를) ${selectedPlayer}플레이어에게 지급합니다.`;
+      } else {
+        expectedResult = "예상 결과: 선택된 옵션이 없습니다.";
+      }
+
+      document.getElementById("expectedResult").textContent = expectedResult;
+      document.getElementById("swapFee").textContent = swapFee;
+    }
+
+    function executeSwap() {
+  const swapAmount = parseInt(document.getElementById("swapAmount").value);
+  const option = document.querySelector('input[name="swapOption"]:checked').value;
+  const selectedPlayer = parseInt(document.getElementById("playerSelect").value);
+
+  if (selectedPlayer < 1 || selectedPlayer > playerCount) {
+    alert("잘못된 플레이어 선택입니다.");
+    return;
+  }
+
+  if (option === "ls" && swapAmount <= playerLToken[selectedPlayer - 1]) {
+    previousSTokenAmount = sTokenAmount;
+    previousLTokenAmount = lTokenAmount;
+    previousFeePool = feePool;
+    previousPlayerSToken = [...playerSToken];
+    previousPlayerLToken = [...playerLToken];
+
+    // Apply the swap fee here as well
+    playerLToken[selectedPlayer - 1] -= swapAmount;
+    feePool += swapFee;
+    const receivedSToken = (swapAmount * sTokenAmount) / (lTokenAmount + swapAmount + swapFee); // Modify to include the swap fee in the calculation
+    const actualReceivedSToken = Math.floor(receivedSToken);
+    playerSToken[selectedPlayer - 1] += (actualReceivedSToken - 1);
+    sTokenAmount -= (actualReceivedSToken - 1);
+    lTokenAmount += (swapAmount - swapFee);
+    updatePoolDisplay();
+    updatePlayerAssets();
+  } else if (option === "sl" && swapAmount <= playerSToken[selectedPlayer - 1]) {
+    previousSTokenAmount = sTokenAmount;
+    previousLTokenAmount = lTokenAmount;
+    previousFeePool = feePool;
+    previousPlayerSToken = [...playerSToken];
+    previousPlayerLToken = [...playerLToken];
+
+    playerSToken[selectedPlayer - 1] -= swapAmount;
+    const receivedLToken = (swapAmount * lTokenAmount) / (sTokenAmount + swapAmount + swapFee); // Modify to include the swap fee in the calculation
+    const actualReceivedLToken = Math.floor(receivedLToken);
+    playerLToken[selectedPlayer - 1] += (actualReceivedLToken - swapFee);
+    sTokenAmount += swapAmount;
+    lTokenAmount -= actualReceivedLToken;
+    feePool += swapFee;
+    updatePoolDisplay();
+    updatePlayerAssets();
+  } else {
+    alert("Insufficient balance or invalid option.");
+  }
+}
+
+    function undoSwap() {
+      sTokenAmount = previousSTokenAmount;
+      lTokenAmount = previousLTokenAmount;
+      feePool = previousFeePool;
+      playerSToken = [...previousPlayerSToken];
+      playerLToken = [...previousPlayerLToken];
+      updatePoolDisplay();
+      updatePlayerAssets();
+    }
+
+    function updatePlayerAssetsManually() {
+      const selectedPlayer = parseInt(document.getElementById("manualPlayerSelect").value);
+      const manualSToken = parseInt(document.getElementById("manualSToken").value);
+      const manualLToken = parseInt(document.getElementById("manualLToken").value);
+
+      if (!isNaN(selectedPlayer) && selectedPlayer >= 1 && selectedPlayer <= playerCount) {
+        playerSToken[selectedPlayer - 1] = manualSToken;
+        playerLToken[selectedPlayer - 1] = manualLToken;
+        updatePlayerAssets();
+      } else {
+        alert("올바른 플레이어를 선택하고 자산을 입력해주세요.");
+      }
+    }
+    function distributeToken() {
+      if (playerOrder.length === 0) {
+        alert("플레이어를 선택해주세요!");
+        return;
+      }
+
+      if (feePool === 0) {
+        alert("토큰 주머니에 토큰이 없습니다!");
+        return;
+      }
+
+      const currentPlayerId = playerOrder[0];
+      const tokensElement = document.getElementById(`tokens${currentPlayerId}`);
+      playerTokens[currentPlayerId - 1]++;
+      tokensElement.textContent = playerTokens[currentPlayerId - 1];
+
+      totalTokens++;
+      document.getElementById("totalTokens").textContent = totalTokens;
+
+      playerOrder.push(playerOrder.shift());
+      updateOrderList();
+
+      feePool--;
+      document.getElementById("feePool").textContent = feePool;
+    }
+
+    function distributeAllTokens() {
+      if (playerOrder.length === 0) {
+        alert("플레이어를 선택해주세요!");
+        return;
+      }
+
+      if (feePool === 0) {
+        alert("토큰 주머니에 토큰이 없습니다!");
+        return;
+      }
+
+      while (feePool > 0) {
+        const currentPlayerId = playerOrder[0];
+        const tokensElement = document.getElementById(`tokens${currentPlayerId}`);
+        playerTokens[currentPlayerId - 1]++;
+        tokensElement.textContent = playerTokens[currentPlayerId - 1];
+
+        totalTokens++;
+        document.getElementById("totalTokens").textContent = totalTokens;
+
+        playerOrder.push(playerOrder.shift());
+        updateOrderList();
+
+        feePool--;
+      }
+
+      document.getElementById("feePool").textContent = feePool;
+    }
+
+    function addPlayerToOrder(playerId) {
+      playerOrder.push(playerId);
+      queueCount[playerId - 1]++;
+      document.getElementById(`queueCount${playerId}`).textContent = queueCount[playerId - 1];
+      updateOrderList();
+      let totalQueueCount = 0;
+  for (let i = 0; i < playerCount; i++) {
+    totalQueueCount += queueCount[i];
+  }
+  const playerQueueCountSpan = document.getElementById("playerQueueCount");
+  playerQueueCountSpan.textContent = totalQueueCount;
+    }
+
+    function removePlayerFromOrder(playerId) {
+  let removedCount = 0;
+  for (let i = playerOrder.length - 1; i >= 0; i--) {
+    if (playerOrder[i] === playerId) {
+      playerOrder.splice(i, 1);
+      removedCount++;
+    }
+  }
+  queueCount[playerId - 1] -= removedCount;
+  let totalQueueCount = 0;
+  for (let i = 0; i < playerCount; i++) {
+    totalQueueCount += queueCount[i];
+  }
+
+  const playerQueueCountSpan = document.getElementById("playerQueueCount");
+  playerQueueCountSpan.textContent = totalQueueCount;
+
+  document.getElementById(`queueCount${playerId}`).textContent = queueCount[playerId - 1];
+  totalQueueCount -= removedCount;
+
+  const tokensElement = document.getElementById(`tokens${playerId}`);
+  playerLToken[playerId - 1] += playerTokens[playerId - 1];
+  tokensElement.textContent = playerTokens[playerId - 1] = 0;
+
+  // 추가된 부분: playerLToken 업데이트
+  const playerLTokenElement = document.getElementById(`playerLToken${playerId}`);
+  playerLToken[playerId - 1] += playerTokens[playerId - 1];
+  playerLTokenElement.textContent = playerLToken[playerId - 1];
+
+  updateOrderList();
+  updatePlayerAssets();
+  document.getElementById("feePool").textContent = feePool;
+}
+
+    function updateOrderList() {
+      const orderListElement = document.getElementById("orderList");
+      const orderList = playerOrder.slice(-100).map(playerId => `플레이어 ${playerId}`).join(" → ");
+      orderListElement.textContent = orderList;
+    }
+  updatePlayerAssets();
+  </script>
+</body>
+
+</html>
