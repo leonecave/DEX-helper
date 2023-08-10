@@ -1,7 +1,7 @@
 function onOpen() {
   var ui = SpreadsheetApp.getUi();
   ui.createMenu('사이드바')
-      .addItem('스왑 및 스테이킹', 'showSidebar')
+      .addItem('DEX 도우미', 'showSidebar')
       .addToUi();
 }
 // 시트 데이터 로딩
@@ -38,32 +38,10 @@ function getSheetData() {
   return loadSheetData();
 }
 
-// 실행 로직 함수
-function performSwap(player, action, swapAmount, pairAmount) {
-  var data = loadSheetData();
-  var poolS = data.poolS;
-  var poolL = data.poolL;
-  var k = data.k;
-  var playerData = data.playerData;
-  
-  // 스왑 실행 로직 구현
-  
-  // 결과 출력
-  var result = "";
-  if (action === "swap") {
-    // 스왑 결과 처리 및 결과 문자열 작성
-  } else if (action === "stake") {
-    // 스테이킹 결과 처리 및 결과 문자열 작성
-  }
-
-
-  return result;
-}
-
 // 사이드바 열기
 function showSidebar() {
   var html = HtmlService.createHtmlOutputFromFile('sidebar')
-      .setTitle('스왑 및 스테이킹');
+      .setTitle('DEX 도우미 by 동굴맨');
   SpreadsheetApp.getUi().showSidebar(html);
 }
 
@@ -100,8 +78,15 @@ function updateSheetData(poolS, poolL, playerData, activityLog) {
 // 활동 내역 기록
 
  // 활동 내역 기록
-  var logData = [timestamp, activityLog.player, activityLog.action, activityLog.swapType, activityLog.swapAmount, activityLog.executionAmount];
-  logSheet.appendRow(logData);
+  if (activityLog.action === "slswap" || activityLog.action === "lsswap") {
+    var logData = [timestamp, activityLog.player, activityLog.action, activityLog.inputAmount, activityLog.executionAmount];
+    logSheet.appendRow(logData);
+  } 
+  
+  else if (activityLog.action === "stake"|| activityLog.action === "unstake") {
+    var stakeLogData = [timestamp, activityLog.player, activityLog.action, activityLog.inputAmount, activityLog.executionAmount];
+    logSheet.appendRow(stakeLogData);
+  }
 
   // 클라이언트 측으로 활동 내역 데이터 전송
   var activityLogOutput = document.getElementById("activityLogTableBody");
