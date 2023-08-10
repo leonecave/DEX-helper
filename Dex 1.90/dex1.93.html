@@ -14,6 +14,8 @@
     <p>S to L 스왑 비율: <span id="sToLRatio">0.5</span></p>
     <p>L to S 스왑 비율: <span id="lToSRatio">2</span></p>
     <p>예치수량: <span id="playerQueueCount"></span></p>
+    <p>페어예치 S: <span id="pairS">10</span></p>
+    <p>페어예치 L: <span id="pairL">20</span></p>
   </div>
   <style>
     body {
@@ -44,8 +46,10 @@
         document.write(`
           <div class="player" id="player${i}">
             <h2>플레이어 ${i}</h2>
-            <p>보유 토큰: <span id="tokens${i}">0</span></p>
-            <p>대기열에 들어간 횟수: <span id="queueCount${i}">0</span></p>
+            <p>누적수수료: <span id="tokens${i}">0</span></p>
+            <p>보유 S: <span id="playerSToken${i}"></span></p>
+            <p>보유 L: <span id="playerLToken${i}"></span></p>
+            <p>예치수량: <span id="queueCount${i}">0</span></p>
             <button onclick="addPlayerToOrder(${i})">예치</button>
             <button onclick="removePlayerFromOrder(${i})">예치 해제</button>
           </div>
@@ -59,24 +63,15 @@
 
 
   <div id="result">
-    <h2>시뮬레이션 결과</h2>
-    <p><strong>총 배급한 토큰 수:</strong> <span id="totalTokens">0</span></p>
-    <p><strong>토큰 배급 순서:</strong> <span id="orderList"></span></p>
+    <h2>예치 풀</h2>
+    <p><strong>분배 수수료:</strong> <span id="totalTokens">0</span></p>
+    <p><strong>분배 순서:</strong> <span id="orderList"></span></p>
   </div>
 </head>
 <body>
 
   <div id="swapSection">
-    <h2>S-L, L-S 스왑실행</h2>
-    <input type="radio" name="swapOption" id="lsSwapOption" value="ls">
-    <label for="lsSwapOption">L to S 스왑</label>
-    <input type="radio" name="swapOption" id="slSwapOption" value="sl">
-    <label for="slSwapOption">S to L 스왑</label>
-    <br>
-    <label for="swapAmount">스왑할 토큰 수량:</label>
-    <input type="number" id="swapAmount" min="1" step="1" required>
-    <p>수수료: <span id="swapFee"></span> L 토큰</p>
-    <p>예상 결과: <span id="expectedResult"></span></p>
+    <h2>스왑</h2>
     <label for="playerSelect">플레이어 선택:</label>
     <select id="playerSelect">
        <option value="1">플레이어 1</option>
@@ -90,6 +85,15 @@
         <option value="9">플레이어 9</option>
         <option value="10">플레이어 10</option>
       </select>
+    <input type="radio" name="swapOption" id="lsSwapOption" value="ls">
+    <label for="lsSwapOption">L to S 스왑</label>
+    <input type="radio" name="swapOption" id="slSwapOption" value="sl">
+    <label for="slSwapOption">S to L 스왑</label>
+    <br>
+    <label for="swapAmount">스왑할 토큰 수량:</label>
+    <input type="number" id="swapAmount" min="1" step="1" required>
+    <p>수수료: <span id="swapFee"></span> L 토큰</p>
+    <p>예상 결과: <span id="expectedResult"></span></p>
     <button onclick="calculateExpectedResult()">예상 결과 계산</button>
     <button onclick="executeSwap()">스왑 실행</button>
     <button onclick="undoSwap()">Undo</button>
@@ -148,6 +152,11 @@
     let playerOrder = [];
     let totalTokens = 0;
 
+    let pairS = sTokenAmount / (250 + getTotalQueueCount());
+    let pairL = lTokenAmount / (250 + getTotalQueueCount());
+    let previouspairS = pairS;
+    let previouspairL = pairL;
+
     function createPlayerOptions() {
       playerCount = parseInt(document.getElementById("playerCount").value);
       if (playerCount >= 2 && playerCount <= 10) {
@@ -194,6 +203,9 @@
       document.getElementById("sTokenAmount").textContent = sTokenAmount;
       document.getElementById("lTokenAmount").textContent = lTokenAmount;
       document.getElementById("feePool").textContent = feePool;
+      document.getElementById("pairS").textContent = pairS;
+      document.getElementById("pairL").textContent = pairL;
+      
 
       // 스왑 비율 계산 및 표시
       const sToLRatio = lTokenAmount !== 0 ? (sTokenAmount / lTokenAmount).toFixed(8) : '∞';
@@ -210,6 +222,7 @@
                 <td>플레이어 ${i + 1}</td>
                 <td><span id="playerSToken${i}">${playerSToken[i]}</span></td>
                 <td><span id="playerLToken${i}">${playerLToken[i]}</span></td>
+            
               </tr>
             `;
           }
@@ -269,9 +282,10 @@
     const receivedSToken = (swapAmount * sTokenAmount) / (lTokenAmount + swapAmount + swapFee); // Modify to include the swap fee in the calculation
     const actualReceivedSToken = Math.floor(receivedSToken);
     playerSToken[selectedPlayer - 1] += (actualReceivedSToken - 1);
-    sTokenAmount -= (actualReceivedSToken - 1);
+    sTokenAmount -= (receivedSToken - 1);
     lTokenAmount += (swapAmount - swapFee);
     updatePoolDisplay();
+    
     updatePlayerAssets();
   } else if (option === "sl" && swapAmount <= playerSToken[selectedPlayer - 1]) {
     previousSTokenAmount = sTokenAmount;
@@ -285,10 +299,11 @@
     const actualReceivedLToken = Math.floor(receivedLToken);
     playerLToken[selectedPlayer - 1] += (actualReceivedLToken - swapFee);
     sTokenAmount += swapAmount;
-    lTokenAmount -= actualReceivedLToken;
+    lTokenAmount -= receivedLToken;
     feePool += swapFee;
     updatePoolDisplay();
     updatePlayerAssets();
+    
   } else {
     alert("Insufficient balance or invalid option.");
   }
@@ -301,6 +316,7 @@
       playerSToken = [...previousPlayerSToken];
       playerLToken = [...previousPlayerLToken];
       updatePoolDisplay();
+      
       updatePlayerAssets();
     }
 
@@ -425,6 +441,16 @@
       orderListElement.textContent = orderList;
     }
   updatePlayerAssets();
+  
+  updatePoolDisplay();
+
+function getTotalQueueCount() {
+      let totalQueueCount = 0;
+      for (let i = 0; i < playerCount; i++) {
+        totalQueueCount += queueCount[i];
+      }
+      return totalQueueCount;
+    }
   </script>
 </body>
 
