@@ -46,16 +46,20 @@ function showSidebar() {
 }
 
 // 시트 데이터 업데이트 함수
-function updateSheetData(poolS, poolL, playerData, activityLog) {
+function updateSheetData(poolS, poolL, playerData, activityLog,queue) {
   
   var spreadsheet = SpreadsheetApp.getActiveSpreadsheet(); // 현재 스크립트가 실행 중인 스프레드시트를 가져옴
   var sheet = spreadsheet.getSheetByName("Validator");
   var logSheet = spreadsheet.getSheetByName("ActivityLog"); // 로그 시트
   var timestamp = new Date();
+  var queueTotal = queue.length;
+  
+  sheet.getRange("V19").setValue(queueTotal);
 
   // 풀 데이터 업데이트
   sheet.getRange("X9").setValue(poolS);
   sheet.getRange("X8").setValue(poolL);
+  
   
   // 플레이어 데이터 업데이트
   sheet.getRange("W17").setValue(playerData['A'].S);
