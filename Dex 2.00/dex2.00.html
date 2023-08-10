@@ -149,8 +149,8 @@
     let playerOrder = [];
     let totalTokens = 0;
 
-    let pairS = Math.floor(sTokenAmount / (250 + getTotalQueueCount()));
-    let pairL = Math.floor(lTokenAmount / (250 + getTotalQueueCount()));
+    let pairS = sTokenAmount / (250 + getTotalQueueCount());
+    let pairL = lTokenAmount / (250 + getTotalQueueCount());
 
     function getTotalQueueCount() {
       let totalQueueCount = 0;
@@ -161,26 +161,14 @@
     }
 
     function updatePairValues() {
-      pairS = Math.floor(sTokenAmount / (250 + getTotalQueueCount()));
-      pairL = Math.floor(lTokenAmount / (250 + getTotalQueueCount()));
+      pairS = sTokenAmount / (250 + getTotalQueueCount());
+      pairL = lTokenAmount / (250 + getTotalQueueCount());
     }
 
     function calculateSToLRatio() {
       const newSTokenAmount = sTokenAmount + pairS * (250 + getTotalQueueCount());
       const newLTokenAmount = lTokenAmount + pairL * (250 + getTotalQueueCount());
       return newSTokenAmount / newLTokenAmount;
-    }
-
-    function updateTokenAmounts() {
-      const stolRatioChange = calculateSToLRatio() - (sTokenAmount / lTokenAmount);
-      const pairSChange = Math.floor(stolRatioChange * pairL);
-      const pairLChange = Math.floor(stolRatioChange * pairS);
-
-      pairS += pairSChange;
-      pairL += pairLChange;
-
-      sTokenAmount += pairS * (250 + getTotalQueueCount());
-      lTokenAmount += pairL * (250 + getTotalQueueCount());
     }
     
 
@@ -267,7 +255,7 @@
     const receivedSToken = (swapAmount * sTokenAmount) / (lTokenAmount + swapAmount + swapFee); // Modify to include the swap fee in the calculation
     const actualReceivedSToken = Math.floor(receivedSToken);
     playerSToken[selectedPlayer - 1] += (actualReceivedSToken - 1);
-    sTokenAmount -= (actualReceivedSToken - 1);
+    sTokenAmount -= (receivedSToken - 1);
     lTokenAmount += (swapAmount - swapFee);
     updatePoolDisplay();
     updatePlayerAssets();
