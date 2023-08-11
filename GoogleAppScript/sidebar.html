@@ -11,7 +11,7 @@
    <br>
   
     <label for="player">플레이어 선택:</label>
-    <select id="player" name="player">
+    <select id="player" name="player" onchange="getSheetData()">
       <option value="A">Player A</option>
       <option value="B">Player B</option>
       <option value="C">Player C</option>
@@ -25,7 +25,7 @@
      <br>
 
     <label for="action">액션 선택:</label>
-    <select id="action" name="action">
+    <select id="action" name="action" onchange="getSheetData()">
       <option value="lsswap">L-S 스왑</option>
       <option value="slswap">S-L 스왑</option>
       <option value="stake">스테이킹</option>
@@ -53,12 +53,11 @@
 <div id="resultOutput"></div>
 <div id="queueDisplay">
     <h2>대기열</h2>
-    <br>
     <ul id="queueList"></ul>
   </div>
+
+  <h2>누적이자</h2>
 <div id="playerFDisplay">
-    <h2>누적이자</h2>
-    <!-- 여기에 플레이어별 F 자산을 나타낼 요소를 추가하세요. -->
 </div>
 <script>
 var playerF = {
