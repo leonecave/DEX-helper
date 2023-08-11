@@ -18,14 +18,14 @@ function loadSheetData() {
   var lpL = sheet.getRange("W8").getValue();
   
   var playerData = {
-    A: { S: sheet.getRange("W17").getValue(), L: sheet.getRange("V17").getValue() },
-    B: { S: sheet.getRange("Y17").getValue(), L: sheet.getRange("X17").getValue() },
-    C: { S: sheet.getRange("AA17").getValue(), L: sheet.getRange("Z17").getValue() },
-    D: { S: sheet.getRange("AC17").getValue(), L: sheet.getRange("AB17").getValue() },
-    E: { S: sheet.getRange("AE17").getValue(), L: sheet.getRange("AD17").getValue() },
-    F: { S: sheet.getRange("AG17").getValue(), L: sheet.getRange("AF17").getValue() },
-    G: { S: sheet.getRange("AI17").getValue(), L: sheet.getRange("AH17").getValue() },
-    H: { S: sheet.getRange("AK17").getValue(), L: sheet.getRange("AJ17").getValue() }
+    A: { S: sheet.getRange("W24").getValue(), L: sheet.getRange("V24").getValue() },
+    B: { S: sheet.getRange("W25").getValue(), L: sheet.getRange("V25").getValue() },
+    C: { S: sheet.getRange("W26").getValue(), L: sheet.getRange("V26").getValue() },
+    D: { S: sheet.getRange("W27").getValue(), L: sheet.getRange("V27").getValue() },
+    E: { S: sheet.getRange("W28").getValue(), L: sheet.getRange("V28").getValue() },
+    F: { S: sheet.getRange("W29").getValue(), L: sheet.getRange("V29").getValue() },
+    G: { S: sheet.getRange("W30").getValue(), L: sheet.getRange("V30").getValue() },
+    H: { S: sheet.getRange("W31").getValue(), L: sheet.getRange("V31").getValue() }
   };
   console.log(poolS,poolL,lpS,lpL,playerData);
   console.log("Data loaded successfully");
@@ -62,22 +62,22 @@ function updateSheetData(poolS, poolL, playerData, activityLog,queue) {
   
   
   // 플레이어 데이터 업데이트
-  sheet.getRange("W17").setValue(playerData['A'].S);
-  sheet.getRange("V17").setValue(playerData['A'].L);
-  sheet.getRange("Y17").setValue(playerData['B'].S);
-  sheet.getRange("X17").setValue(playerData['B'].L);
-  sheet.getRange("AA17").setValue(playerData['C'].S);
-  sheet.getRange("Z17").setValue(playerData['C'].L);
-  sheet.getRange("AC17").setValue(playerData['D'].S);
-  sheet.getRange("AB17").setValue(playerData['D'].L);
-  sheet.getRange("AE17").setValue(playerData['E'].S);
-  sheet.getRange("AD17").setValue(playerData['E'].L);
-  sheet.getRange("AG17").setValue(playerData['F'].S);
-  sheet.getRange("AF17").setValue(playerData['F'].L);
-  sheet.getRange("AI17").setValue(playerData['G'].S);
-  sheet.getRange("AH17").setValue(playerData['G'].L);
-  sheet.getRange("AK17").setValue(playerData['H'].S);
-  sheet.getRange("AJ17").setValue(playerData['H'].L);
+  sheet.getRange("W24").setValue(playerData['A'].S);
+  sheet.getRange("V24").setValue(playerData['A'].L);
+  sheet.getRange("W25").setValue(playerData['B'].S);
+  sheet.getRange("V25").setValue(playerData['B'].L);
+  sheet.getRange("W26").setValue(playerData['C'].S);
+  sheet.getRange("V26").setValue(playerData['C'].L);
+  sheet.getRange("W27").setValue(playerData['D'].S);
+  sheet.getRange("V27").setValue(playerData['D'].L);
+  sheet.getRange("W28").setValue(playerData['E'].S);
+  sheet.getRange("V28").setValue(playerData['E'].L);
+  sheet.getRange("W29").setValue(playerData['F'].S);
+  sheet.getRange("V29").setValue(playerData['F'].L);
+  sheet.getRange("W30").setValue(playerData['G'].S);
+  sheet.getRange("V30").setValue(playerData['G'].L);
+  sheet.getRange("W31").setValue(playerData['H'].S);
+  sheet.getRange("V31").setValue(playerData['H'].L);
 
 // 활동 내역 기록
 

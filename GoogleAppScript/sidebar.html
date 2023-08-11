@@ -40,6 +40,9 @@
       <input type="number" id="inputAmount" name="inputAmount" min="1">
       <br>
        <br>
+       <span style="color: red;">unstake 예상결과는 직접 세서 입력할 것!</span>
+       <br>
+
     </div>
     
    <!-- 버튼들 -->
@@ -115,7 +118,7 @@ function updateExpectedAmount(data, action, inputAmount) {
     resultMessage = "예상값 : 총 " + inputAmount + "개 = [" + Math.ceil(lpS * inputAmount) + "S, " + Math.ceil(lpL * inputAmount) + "L]";
   }
   else if (action === "unstake") {
-    resultMessage = "예상값 : 총 " + inputAmount + "개 = [" + Math.ceil(lpS * inputAmount) + "S, " + Math.ceil(lpL * inputAmount) + "L]";
+    resultMessage = "예상값 : 총 " + inputAmount + "개 = [" + Math.floor(lpS * inputAmount) + "S, " + Math.floor(lpL * inputAmount) + "L]";
   }
   var expectedOutput = document.getElementById("expectedOutput");
   expectedOutput.innerHTML = "<p>" + resultMessage + "</p>";
@@ -162,22 +165,6 @@ function executeAction() {
         playerData[player].S -= inputAmount;
         playerData[player].L += Math.floor(executionAmount) - 1;
 
-        if (queue.length === 0) {
-        // 대기열에 객체가 없을 때 poolL 값 +1 증가
-        poolL += 1;
-        } else {
-          var firstQueueItem = queue[0];
-          playerF[firstQueueItem.player] ++;
-
-          console.log(playerData)
-
-          var firstQueueItem = queue.shift();
-          queue.push(firstQueueItem);
-
-          updateQueueDisplay();
-          updatePlayerFDisplay();
-          
-        }
      
         var resultOutput = document.getElementById("resultOutput");
         resultOutput.innerHTML = "<p>스왑 실행 결과: " + Math.floor(executionAmount-1) + "L 지급</p>";
@@ -189,22 +176,6 @@ function executeAction() {
         poolS -= executionAmount;
         playerData[player].L -= inputAmount;
         playerData[player].S += Math.floor(executionAmount);
-
-       if (queue.length === 0) {
-        // 대기열에 객체가 없을 때 poolL 값 +1 증가
-        poolL += 1;
-        } else {
-          var firstQueueItem = queue[0];
-          playerF[firstQueueItem.player] ++;
-
-          console.log(playerData)
-
-          var firstQueueItem = queue.shift();
-          queue.push(firstQueueItem);
-
-          updateQueueDisplay();
-          updatePlayerFDisplay();
-        }
       
         var resultOutput = document.getElementById("resultOutput");
         resultOutput.innerHTML = "<p>스왑 실행 결과: " + Math.floor(executionAmount) + "S 지급</p>";
